@@ -20,7 +20,7 @@ You will need to set up an app at the [__Spotify developer portal__](https://dev
 
  1. On the next page, scroll down and click __Add Uri__
 
- 1. Enter: __http://localhost/auth.html__
+ 1. Enter: `http://localhost/auth.html`
 
  1. Click __Add Uri__ again to add it. (huh?)
 
