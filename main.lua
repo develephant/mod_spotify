@@ -1,16 +1,30 @@
 --- Spotify API for Corona SDK
+
 local spotifyAuth = require('spotify.spotify_auth')
 local spotifyApi = require('spotify.spotify_api')
 
+--== Start up app, after auth ==--
+
 function startApp( spotify )
-  spotify:request( spotify.Get, 'browse/new-releases', { limit = 5, country = 'US' } )
+  local req =
+  {
+    path = 'browse/new-releases',
+    params = { limit = 1, country = 'US' },
+    onResult = function( res )
+      print( res )
+    end
+  }
+  spotify:request( req )
 end
+
+--== Start the OAuth flow ==--
 
 local function callback( res_tbl )
   if res_tbl.error then
     print( res_tbl.error )
   elseif res_tbl.token then
-    local spotify = spotifyApi:init( res_tbl.token )
+    local spotify = spotifyApi:init( res_tbl.token, true )
+
     startApp( spotify )
   end
 end

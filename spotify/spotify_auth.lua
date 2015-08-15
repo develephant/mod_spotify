@@ -3,7 +3,7 @@ local url = require('socket.url')
 
 local auth =
 {
-  client_id = "", -- Place your Spotify app client id here
+  client_id = "",
   --============================================--
   access_token = "",
   expires_in = 0,
@@ -27,7 +27,7 @@ local auth =
 local function url_decode (s)
   return s:gsub ('+', ' '):gsub ('%%(%x%x)', function (hex) return string.char (tonumber (hex, 16)) end)
 end
-
+-- query string parser
 local function query_string ( url_str )
   local res = {}
   local url_str = url_str or ""
@@ -53,9 +53,15 @@ local function query_string ( url_str )
   return res
 end
 
---== Prompt for auth
-
-function auth:promptForAuth( auth_tbl )
+---Prompt for auth
+-- @table auth_tbl The prompt options
+-- auth_tbl -
+--  client_id
+--  callback -> string
+--  scope
+--  show_dialog
+-- @return An access token or error
+function auth:prompt( auth_tbl )
 
   local _callback = auth_tbl.callback or nil
 
@@ -99,7 +105,7 @@ function auth:promptForAuth( auth_tbl )
           self.expires_in = query_obj.expires_in
         end
 
-        _callback( { token = self.access_token } )
+        _callback( { token = self.access_token, expires_in = self.expires_in } )
 
         wv:removeSelf()
       end
@@ -114,6 +120,14 @@ end
 
 function auth:getToken()
   return self.access_token
+end
+
+function auth:getLastState()
+  return self.last_state
+end
+
+function auth:getLastError()
+  return self.last_error
 end
 
 function auth:_generateAuthUrl( state )
