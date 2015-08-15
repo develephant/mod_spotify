@@ -2,7 +2,37 @@
 
 ___A package for authentication and access to the Spotify Web API from Corona SDK.___
 
-The package containes two modules, one for the OAuth workflow, and the other is a __"request"__ module to call the __Spotify__ API. These modules reside in the __spotify__ folder and should be left in that directory. To require those files in your project use:
+The package containes two modules, one for the OAuth workflow, and the other is a __"request"__ module to call the __Spotify__ API. These modules reside in the __spotify__ folder and should be left in that directory.
+
+## Setting up a Spotify app for mod_spotify
+
+You will need to set up an app at the [__Spotify developer portal__](https://developer.spotify.com) before you can start using the API in the mod. Most importantly, we need a __client_id__.
+
+> __mod_spotify__ is using the __Spotify Web API__. You cannot stream music directly with this API. You _can_ open a __Spotify__ app, and send it a deep link, if its installed
+
+ 1. Log into your Spotify developer account (or register) at https://developer.spotify.com
+
+ 1. Click the __My Apps__ navigation link
+
+ 1. Click the __Create an app__ button
+
+ 1. Fill in the app details and click __Create__
+
+ 1. On the next page, scroll down and click __Add Uri__
+
+ 1. Enter: http://localhost/auth.html
+
+ 1. Click __Add Uri__ again to add it. (huh?)
+
+ 1. Note the __Client ID__. You will use that in the mod.
+
+ 1. Make sure to click __Save__ to update the changes.
+
+ 1. _You're all done here!_
+
+## Working with mod_spotify
+
+Add the __Spotify__ modules to your project:
 
 ```lua
 local spotifyAuth = require('spotify.spotify_auth')
@@ -66,6 +96,21 @@ spotifyAuth:prompt( options )
 ```
 
 > __Make sure to read up on the [scoping options here](https://developer.spotify.com/web-api/using-scopes/). Scroll down a bit to the Scope list on the page.__
+
+### Spotify Auth methods
+
+#### spotifyAuth:prompt( options )
+
+> Prompt for confirmation. Returns access token, or error.
+
+_Options table keys_
+
+* client_id (required)
+* scope
+* show_dialog
+* callback (required)
+
+---
 
 ## spotify_api module
 `spotify_api.lua`
@@ -189,20 +234,58 @@ The results will be returned to the `onResult` handler.
 spotify:request( req )
 ```
 
-### Spotify API module
+### Spotify API methods
 
 #### spotify:request( req_tbl )
+
+> Sends a request to Spotify
+
+_Request table keys_
+
+* path (required)
+* method (required)
+* params
+* body
+* onResult (required)
+
 #### spotify.encode( url_str )
+
+> URL encode a string (escape)
+
 #### spotify.decode( enc_url )
+
+> Decode a URL (unescape)
+
 #### spotify.tbl2json( tbl )
+
+> Converts a Lua table to JSON string
+
 #### spotify.json2tbl( json_str )
+
+> Converts JSON string to Lua table
+
 #### spotify.dump( tbl )
+
+> Outputs a table in the terminal
 
 ### Http method constants
 
 #### spotify.Get
+
+> GET
+
 #### spotify.Post
+
+> POST
+
 #### spotify.Put
+
+> PUT
+
 #### spotify.Delete
+
+> DELETE
+
+You can use the `method` string in place of the constants in the request table.
 
 :elephant: &copy;2015 C. Byerley - [@develephant](https://twitter.com/develephant)

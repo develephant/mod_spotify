@@ -1,4 +1,10 @@
---- Spotify Authorization Flow
+---Spotify Auth module
+-- @name spotify_auth
+-- @version 0.1.0
+-- @author C.Byerley
+-- @copyright 2015 develephant
+-- @license MIT
+-- @twitter @develephant
 local url = require('socket.url')
 
 local auth =
@@ -15,8 +21,8 @@ local auth =
   show_dialog = false,
 
   --See https://developer.spotify.com/web-api/using-scopes/
-  --the scopes are seperated by spaces. Some defaults:
-  spotify_scopes = "",
+  --the scopes are seperated by spaces.
+  spotify_scope = "",
 
   spotify_response_type = 'token',
   spotify_redirect_url = url.escape("http://localhost/auth.html"),
@@ -67,6 +73,7 @@ function auth:prompt( auth_tbl )
 
   self.show_dialog = auth_tbl.show_dialog or false
   self.client_id = auth_tbl.client_id or nil
+  self.spotify_scope = auth_tbl.scope or ''
 
   -- webView
   local wv
@@ -132,11 +139,11 @@ end
 
 function auth:_generateAuthUrl( state )
   local state = state or os.time()
-  local scopes = url.escape( self.spotify_scopes ) or ""
+  local scope = url.escape( self.spotify_scope )
   local show_dialog = self.show_dialog
   local str_join = self.spotify_auth_url .. "client_id=%s&response_type=%s&redirect_uri=%s&scope=%s&show_dialog=%s&state=%d"
   local request_url = string.format( str_join,
-  self.client_id, self.spotify_response_type, self.spotify_redirect_url, scopes, tostring(self.show_dialog), state)
+  self.client_id, self.spotify_response_type, self.spotify_redirect_url, scope, tostring(show_dialog), state)
   return request_url
 end
 

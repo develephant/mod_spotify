@@ -1,4 +1,10 @@
---- Spotify API Request
+---Spotify API module
+-- @name spotify_api
+-- @version 0.1.0
+-- @author C.Byerley
+-- @copyright 2015 develephant
+-- @license MIT
+-- @twitter @develephant
 local json = require('json')
 local url = require('socket.url')
 
