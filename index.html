@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <title>mod_spotify by develephant</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>mod_spotify</h1>
+        <h2>A Spotify module for use with Corona SDK</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/develephant/mod_spotify/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/develephant/mod_spotify/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/develephant/mod_spotify" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a id="mod_spotify" class="anchor" href="#mod_spotify" aria-hidden="true"><span class="octicon octicon-link"></span></a>mod_spotify</h1>
+
+<p><strong><em>A package for authentication and access to the Spotify Web API for use with Corona SDK.</em></strong></p>
+
+<p>The package containes two modules, one for the OAuth workflow, and the other is a <strong>"request"</strong> module to call the <strong>Spotify</strong> API. These modules reside in the <strong>spotify</strong> folder and should be left in that directory.</p>
+
+<h2>
+<a id="setting-up-a-spotify-app-for-mod_spotify" class="anchor" href="#setting-up-a-spotify-app-for-mod_spotify" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setting up a Spotify app for mod_spotify</h2>
+
+<p>You will need to set up an app at the <a href="https://developer.spotify.com"><strong>Spotify developer portal</strong></a> before you can start using the API in the mod. Most importantly, we need a <strong>client_id</strong>.</p>
+
+<blockquote>
+<p><strong>mod_spotify</strong> is using the <strong>Spotify Web API</strong>. You cannot stream music directly with this API. You <em>can</em> open a <strong>Spotify</strong> app, and send it a deep link, if its installed</p>
+</blockquote>
+
+<ol>
+<li><p>Log into your Spotify developer account (or register) at <a href="https://developer.spotify.com">https://developer.spotify.com</a></p></li>
+<li><p>Click the <strong>My Apps</strong> navigation link</p></li>
+<li><p>Click the <strong>Create an app</strong> button</p></li>
+<li><p>Fill in the app details and click <strong>Create</strong></p></li>
+<li><p>On the next page, scroll down and click <strong>Add Uri</strong></p></li>
+<li><p>Enter: http://localhost/auth.html</p></li>
+<li><p>Click <strong>Add Uri</strong> again to add it. (huh?)</p></li>
+<li><p>Note the <strong>Client ID</strong>. You will use that in the mod.</p></li>
+<li><p>Make sure to click <strong>Save</strong> to update the changes.</p></li>
+<li><p><em>You're all done here!</em></p></li>
+</ol>
+
+<h2>
+<a id="working-with-mod_spotify" class="anchor" href="#working-with-mod_spotify" aria-hidden="true"><span class="octicon octicon-link"></span></a>Working with mod_spotify</h2>
+
+<p>Add the <strong>Spotify</strong> modules to your project:</p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-k">local</span> spotifyAuth <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>spotify.spotify_auth<span class="pl-pds">'</span></span>)
+<span class="pl-k">local</span> spotifyApi <span class="pl-k">=</span> <span class="pl-c1">require</span>(<span class="pl-s"><span class="pl-pds">'</span>spotify.spotify_api<span class="pl-pds">'</span></span>)</pre></div>
+
+<h2>
+<a id="spotify_auth-module" class="anchor" href="#spotify_auth-module" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify_auth module</h2>
+
+<p><code>spotify_auth.lua</code></p>
+
+<p>The <strong>Spotify</strong> API uses <strong>OAuth2</strong> for authentication, which means that the user must manually "whitelist" your application. This usually requires a visit to a web page for the user to log into the service and accept any special options your app requires (see 'scope' below).</p>
+
+<p>The entire process is handled by the <strong>spotify_auth</strong> module. Leaving you (hopefully) with a user confirmed access token, which is then sent with each API request behind the scenes.</p>
+
+<p>To start the OAuth workflow, which should happen towards the start of your app:</p>
+
+<p>Set up a callback for the authorization</p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-c">--hold the api instance</span>
+<span class="pl-k">local</span> spotify
+<span class="pl-c">-- Set up the callback</span>
+<span class="pl-k">local</span> <span class="pl-k">function</span> <span class="pl-en">callback</span>(<span class="pl-smi"> table_result </span>)
+  <span class="pl-k">if</span> table_result.<span class="pl-smi">error</span> <span class="pl-k">then</span> <span class="pl-c">--error</span>
+    <span class="pl-c1">print</span>(<span class="pl-s"><span class="pl-pds">'</span>error<span class="pl-pds">'</span></span>, table_result.<span class="pl-smi">error</span>)
+  <span class="pl-k">elseif</span> table_result.<span class="pl-smi">token</span> <span class="pl-k">then</span> <span class="pl-c">--success</span>
+    <span class="pl-c">--store the access token</span>
+    <span class="pl-v">self</span>.<span class="pl-smi">access_token</span> <span class="pl-k">=</span> table_result.<span class="pl-smi">token</span>
+    <span class="pl-c">--initialize the spotify_api</span>
+    <span class="pl-c">--module with the access token.</span>
+    spotify <span class="pl-k">=</span> spotifyApi:<span class="pl-c1">init</span>( <span class="pl-v">self</span>.<span class="pl-smi">access_token</span> )
+  <span class="pl-k">end</span>
+<span class="pl-k">end</span></pre></div>
+
+<h3>
+<a id="visualizing-the-output" class="anchor" href="#visualizing-the-output" aria-hidden="true"><span class="octicon octicon-link"></span></a>Visualizing the output</h3>
+
+<p>You can pass <code>true</code> along with the <code>access_token</code> to enable auto table printing in the terminal, as the requests resolve.</p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-c">-- Turn on auto output logging</span>
+spotify <span class="pl-k">=</span> spotifyApi:<span class="pl-c1">init</span>( <span class="pl-v">self</span>.<span class="pl-smi">access_token</span>, <span class="pl-c1">true</span> )</pre></div>
+
+<p>You can also use the built-in command <code>dump</code> to manually output a table.</p>
+
+<div class="highlight highlight-lua"><pre>spotify.<span class="pl-c1">dump</span>( api_tbl_data ) <span class="pl-c">--prints to the terminal</span></pre></div>
+
+<h3>
+<a id="running-the-oauth-prompt" class="anchor" href="#running-the-oauth-prompt" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running the OAuth prompt</h3>
+
+<p>Prompt the user for the confirmation using
+an options table with some specific keys.</p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-k">local</span> options <span class="pl-k">=</span>
+{
+  client_id <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>YOUR_SPOTIFY_APP_CLIENT_ID<span class="pl-pds">'</span></span>,
+  scope <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>user-library-read user-read-email<span class="pl-pds">'</span></span>
+  callback <span class="pl-k">=</span> callback
+}
+
+spotifyAuth:<span class="pl-c1">prompt</span>( options )</pre></div>
+
+<blockquote>
+<p><strong>Make sure to read up on the <a href="https://developer.spotify.com/web-api/using-scopes/">scoping options here</a>. Scroll down a bit to the Scope list on the page.</strong></p>
+</blockquote>
+
+<h3>
+<a id="spotify-auth-methods" class="anchor" href="#spotify-auth-methods" aria-hidden="true"><span class="octicon octicon-link"></span></a>Spotify Auth methods</h3>
+
+<h4>
+<a id="spotifyauthprompt-options-" class="anchor" href="#spotifyauthprompt-options-" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotifyAuth:prompt( options )</h4>
+
+<blockquote>
+<p>Prompt for confirmation. Returns access token, or error.</p>
+</blockquote>
+
+<p><em>Options table keys</em></p>
+
+<ul>
+<li>client_id (required)</li>
+<li>scope</li>
+<li>show_dialog</li>
+<li>callback (required)</li>
+</ul>
+
+<hr>
+
+<h2>
+<a id="spotify_api-module" class="anchor" href="#spotify_api-module" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify_api module</h2>
+
+<p><code>spotify_api.lua</code></p>
+
+<p>The <strong>spotify_api</strong> module provides a method of calling the Web REST API. You can view the <a href="https://developer.spotify.com/web-api/endpoint-reference/"><strong>Spotify</strong> API docs</a> as a reference on putting together requests.</p>
+
+<p>Search for an item <a href="https://developer.spotify.com/web-api/search-item/">(doc source)</a></p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-k">local</span> api_request <span class="pl-k">=</span>
+{
+  method <span class="pl-k">=</span> spotify.<span class="pl-smi">Get</span> <span class="pl-c">-- default, optional.</span>
+  path <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>search<span class="pl-pds">'</span></span>,
+  params <span class="pl-k">=</span>
+  {
+    q <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>A Tribe Called Quest<span class="pl-pds">"</span></span>,
+    limit <span class="pl-k">=</span> <span class="pl-c1">4</span>,
+    type <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>track<span class="pl-pds">"</span></span>
+  },
+  onResult <span class="pl-k">=</span> <span class="pl-k">function</span>(<span class="pl-smi"> result_tbl </span>)
+    <span class="pl-k">local</span> media <span class="pl-k">=</span> result_tbl.<span class="pl-smi">items</span>[<span class="pl-c1">1</span>].<span class="pl-smi">images</span>[<span class="pl-c1">1</span>].<span class="pl-smi">url</span>
+  <span class="pl-k">end</span>
+}
+spotifyApi:<span class="pl-c1">request</span>( api_request )</pre></div>
+
+<p>In the <code>api_request</code> above, the <code>method</code> key defaults to 'GET', so you can exclude it for any 'GET' requests (which is most). The <code>params</code> key will depend on each API function, and is a table of key/value pairs. See the <a href="https://developer.spotify.com/web-api/endpoint-reference/"><strong>Spotify Web API</strong> docs</a>.</p>
+
+<h3>
+<a id="figuring-out-the-path-parameter" class="anchor" href="#figuring-out-the-path-parameter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Figuring out the <code>path</code> parameter</h3>
+
+<p>On the <strong>Spotify</strong> <a href="https://developer.spotify.com/web-api/endpoint-reference/">endpoint reference</a> page is a table of API actions. You can find the <code>method</code> from the <strong>Method</strong> column. In the <strong>Endpoint</strong> column is where you derive the <code>path</code> property for your request. As an example, the endpoints will look like so:</p>
+
+<p><code>/v1/browse/categories</code></p>
+
+<p><strong>For your request path you only need everything after the "v1/"</strong>. So for the endpoint above, you would use as the <code>path</code> parameter:</p>
+
+<p><code>browse/categories</code></p>
+
+<h3>
+<a id="building-the-params-parameter" class="anchor" href="#building-the-params-parameter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building the <code>params</code> parameter</h3>
+
+<p>If you click on one of the doc links for an endpoint, you will be taken to a detail page that will commonly list additional query string modifiers you can add.</p>
+
+<p>For example, the <code>browse/categories</code> options include <code>country</code>, <code>locale</code>, <code>limit</code>, etc. The query parameters vary for each endpoint.</p>
+
+<blockquote>
+<p>Though output in JSON, you can also view the expected response structure on the API detail pages.</p>
+</blockquote>
+
+<p>To add parameters to the query string, just build up an associative table.</p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-k">local</span> query_params <span class="pl-k">=</span>
+{
+  limit <span class="pl-k">=</span> <span class="pl-c1">10</span>,
+  country <span class="pl-k">=</span> US
+}</pre></div>
+
+<p>If the key names are exotic in any way -- contain spaces or the like -- then put the key name in quotes, and some brackets.</p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-k">local</span> query_params <span class="pl-k">=</span>
+{
+  limit <span class="pl-k">=</span> <span class="pl-c1">10</span>,
+  country <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>US<span class="pl-pds">"</span></span>,
+  [<span class="pl-s"><span class="pl-pds">"</span>exotic key!<span class="pl-pds">"</span></span>] <span class="pl-k">=</span> spotify.<span class="pl-c1">encode</span>(<span class="pl-s"><span class="pl-pds">"</span>a value with spaces<span class="pl-pds">"</span></span>)
+}</pre></div>
+
+<h3>
+<a id="including-data-with-post-and-put" class="anchor" href="#including-data-with-post-and-put" aria-hidden="true"><span class="octicon octicon-link"></span></a>Including data with 'POST' and 'PUT'</h3>
+
+<div class="highlight highlight-lua"><pre><span class="pl-k">local</span> req <span class="pl-k">=</span>
+{
+  path <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>browse/new-releases<span class="pl-pds">'</span></span>,
+  body <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>{"genre":"rock"}<span class="pl-pds">'</span></span>,
+  method <span class="pl-k">=</span> spotify.<span class="pl-smi">Post</span>
+}</pre></div>
+
+<p>Any 'POST' or 'PUSH' actions take JSON data in the body. You can build these structures as tables first and then convert them.</p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-k">local</span> bt <span class="pl-k">=</span> { genre <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>rock<span class="pl-pds">"</span></span> }
+<span class="pl-k">local</span> body <span class="pl-k">=</span> spotify.<span class="pl-c1">tbl2json</span>( bt )</pre></div>
+
+<p>Some actions use both the <code>body</code> and <code>params</code></p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-k">local</span> req <span class="pl-k">=</span>
+{
+  method <span class="pl-k">=</span> spotify.<span class="pl-smi">Put</span>
+  params <span class="pl-k">=</span> { username <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Martha<span class="pl-pds">"</span></span> },
+  body <span class="pl-k">=</span> spotify.<span class="pl-c1">tbl2json</span>({ dogs <span class="pl-k">=</span> { <span class="pl-s"><span class="pl-pds">'</span>Fred<span class="pl-pds">'</span></span>, <span class="pl-s"><span class="pl-pds">'</span>Alice<span class="pl-pds">'</span></span> }, reads <span class="pl-k">=</span> <span class="pl-c1">true</span> })
+}</pre></div>
+
+<blockquote>
+<p>You must specify the http <code>method</code> in every case, except 'GET'.</p>
+</blockquote>
+
+<h3>
+<a id="setting-up-the-onresult-parameter" class="anchor" href="#setting-up-the-onresult-parameter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setting up the <code>onResult</code> parameter</h3>
+
+<p>You need to set up a callback in <code>onResult</code> to retrieve any results.</p>
+
+<div class="highlight highlight-lua"><pre><span class="pl-k">local</span> req <span class="pl-k">=</span>
+{
+  path <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>browse/new-releases<span class="pl-pds">'</span></span>,
+  params <span class="pl-k">=</span> { limit <span class="pl-k">=</span> <span class="pl-c1">1</span>, country <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span>US<span class="pl-pds">'</span></span> },
+  onResult <span class="pl-k">=</span> <span class="pl-k">function</span>(<span class="pl-smi"> result_tbl </span>)
+    <span class="pl-c">--output table to terminal</span>
+    spotify.<span class="pl-c1">dump</span>( result_tbl )
+  <span class="pl-k">end</span>
+}</pre></div>
+
+<h3>
+<a id="send-the-spotify-web-api-request" class="anchor" href="#send-the-spotify-web-api-request" aria-hidden="true"><span class="octicon octicon-link"></span></a>Send the Spotify Web API request</h3>
+
+<p>The results will be returned to the <code>onResult</code> handler.</p>
+
+<blockquote>
+<p><strong>Results are always returned as Lua tables.</strong></p>
+</blockquote>
+
+<div class="highlight highlight-lua"><pre>spotify:<span class="pl-c1">request</span>( req )</pre></div>
+
+<h3>
+<a id="spotify-api-methods" class="anchor" href="#spotify-api-methods" aria-hidden="true"><span class="octicon octicon-link"></span></a>Spotify API methods</h3>
+
+<h4>
+<a id="spotifyrequest-req_tbl-" class="anchor" href="#spotifyrequest-req_tbl-" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify:request( req_tbl )</h4>
+
+<blockquote>
+<p>Sends a request to Spotify</p>
+</blockquote>
+
+<p><em>Request table keys</em></p>
+
+<ul>
+<li>path (required)</li>
+<li>method (required)</li>
+<li>params</li>
+<li>body</li>
+<li>onResult (required)</li>
+</ul>
+
+<h4>
+<a id="spotifyencode-url_str-" class="anchor" href="#spotifyencode-url_str-" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify.encode( url_str )</h4>
+
+<blockquote>
+<p>URL encode a string (escape)</p>
+</blockquote>
+
+<h4>
+<a id="spotifydecode-enc_url-" class="anchor" href="#spotifydecode-enc_url-" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify.decode( enc_url )</h4>
+
+<blockquote>
+<p>Decode a URL (unescape)</p>
+</blockquote>
+
+<h4>
+<a id="spotifytbl2json-tbl-" class="anchor" href="#spotifytbl2json-tbl-" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify.tbl2json( tbl )</h4>
+
+<blockquote>
+<p>Converts a Lua table to JSON string</p>
+</blockquote>
+
+<h4>
+<a id="spotifyjson2tbl-json_str-" class="anchor" href="#spotifyjson2tbl-json_str-" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify.json2tbl( json_str )</h4>
+
+<blockquote>
+<p>Converts JSON string to Lua table</p>
+</blockquote>
+
+<h4>
+<a id="spotifydump-tbl-" class="anchor" href="#spotifydump-tbl-" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify.dump( tbl )</h4>
+
+<blockquote>
+<p>Outputs a table in the terminal</p>
+</blockquote>
+
+<h3>
+<a id="http-method-constants" class="anchor" href="#http-method-constants" aria-hidden="true"><span class="octicon octicon-link"></span></a>Http method constants</h3>
+
+<h4>
+<a id="spotifyget" class="anchor" href="#spotifyget" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify.Get</h4>
+
+<blockquote>
+<p>GET</p>
+</blockquote>
+
+<h4>
+<a id="spotifypost" class="anchor" href="#spotifypost" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify.Post</h4>
+
+<blockquote>
+<p>POST</p>
+</blockquote>
+
+<h4>
+<a id="spotifyput" class="anchor" href="#spotifyput" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify.Put</h4>
+
+<blockquote>
+<p>PUT</p>
+</blockquote>
+
+<h4>
+<a id="spotifydelete" class="anchor" href="#spotifydelete" aria-hidden="true"><span class="octicon octicon-link"></span></a>spotify.Delete</h4>
+
+<blockquote>
+<p>DELETE</p>
+</blockquote>
+
+<p>You can use the <code>method</code> string in place of the constants in the request table.</p>
+
+<p><img class="emoji" title=":elephant:" alt=":elephant:" src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f418.png" height="20" width="20" align="absmiddle"> ©2015 C. Byerley - <a href="https://twitter.com/develephant">@develephant</a></p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
