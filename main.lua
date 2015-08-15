@@ -4,13 +4,20 @@
 -- @license MIT
 -- @twitter @develephant
 
+--===========================================================--
+--== Add your Spotify Client ID at the bottom of this file.
+--===========================================================--
+
 --== Add the Spotify modules ==--
 local spotifyAuth = require('spotify.spotify_auth')
 local spotifyApi = require('spotify.spotify_api')
 
+--== api object
+local spotify
+
 --== Start up app, after auth ==--
 
-function startApp( spotify )
+function startApp()
   local req =
   {
     path = 'browse/new-releases',
@@ -28,19 +35,16 @@ local function callback( res_tbl )
   if res_tbl.error then
     print( res_tbl.error )
   elseif res_tbl.token then
-    local spotify = spotifyApi:init( res_tbl.token )
-
-    startApp( spotify )
+    spotify = spotifyApi:init( res_tbl.token )
+    startApp()
   end
 end
 
 local auth =
 {
-  --client_id = 'YOUR_SPOTIFY_CLIENT_ID',
-  client_id = 'b51817d3b5db4fb2940e17f571835424',
+  client_id = 'YOUR_SPOTIFY_CLIENT_ID', --See README
   callback = callback,
-  scope = 'user-library-read playlist-modify-private',
-  show_dialog = false
+  scope = 'user-library-read'
 }
 
 spotifyAuth:prompt( auth )

@@ -1,6 +1,6 @@
 # mod_spotify
 
-___A package for authentication and access to the Spotify Web API from Corona SDK.___
+___A package for authentication and access to the Spotify Web API for use with Corona SDK.___
 
 The package containes two modules, one for the OAuth workflow, and the other is a __"request"__ module to call the __Spotify__ API. These modules reside in the __spotify__ folder and should be left in that directory.
 
